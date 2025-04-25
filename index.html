@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Media Vault</title>
   <style>
-    /* ——— STYLES ——— */
     body { margin: 0; font-family: "Courier New", Courier, monospace; background: white; }
     header { padding: 1rem; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
     header h1 { font-size: 1.5rem; color: #001f5b; margin: 0; }
@@ -69,8 +68,8 @@
   </div>
 
   <script>
-    const cloudName = "dnqzqicca"; // Cloudinary cloud name
-    const unsignedUploadPreset = "vid_diary"; // Replace with your actual unsigned preset
+    const cloudName = "dnqzqicca";
+    const unsignedUploadPreset = "vid_diary";
     let currentFilter = "video";
     let entries = JSON.parse(localStorage.getItem("mediaEntries") || "[]");
 
@@ -101,45 +100,60 @@
       formData.append("upload_preset", unsignedUploadPreset);
       formData.append("context", `alt=${title}|caption=${description}`);
 
-      // Log the form data to debug the request
-      console.log("Uploading file with data: ", formData);
-
       fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
         method: "POST",
         body: formData
       })
-        .then(res => res.json())
-        .then(data => {
-          console.log(data); // Log the response to see the data returned
-          if (data.error) {
-            console.error("Cloudinary error: ", data.error);
-            alert("Upload failed.");
-          } else {
-            const entry = {
-              id: Date.now(),
-              title,
-              description,
-              url: data.secure_url,
-              type,
-              date: new Date().toLocaleDateString("en-CA"),
-              public_id: data.public_id,
-              thumb: data.thumbnail_url || data.secure_url
-            };
-
-            entries.push(entry);
-            saveEntries();
-            closeModal();
-            document.getElementById("titleInput").value = "";
-            document.getElementById("descInput").value = "";
-            document.getElementById("fileInput").value = "";
-            document.getElementById("typeInput").value = "video";
-            filterEntries(type);
-          }
-        })
-        .catch(err => {
-          console.error(err);
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          console.error("Cloudinary error: ", data.error);
           alert("Upload failed.");
-        });
+        } else {
+          const entry = {
+            id: Date.now(),
+            title,
+            description,
+            url: data.secure_url,
+            type,
+            date: new Date().toLocaleDateString("en-CA"),
+            public_id: data.public_id,
+            thumb: data.thumbnail_url || data.secure_url
+          };
+
+          entries.push(entry);
+          saveEntries();
+          closeModal();
+          document.getElementById("titleInput").value = "";
+          document.getElementById("descInput").value = "";
+          document.getElementById("fileInput").value = "";
+          document.getElementById("typeInput").value = "video";
+          filterEntries(type);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Upload failed.");
+      });
+    }
+
+    function deleteFileFromCloudinary(public_id) {
+      fetch("/.netlify/functions/deleteFile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ public_id })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("File deleted from Cloudinary.");
+        } else {
+          alert("Error deleting from Cloudinary.");
+        }
+      })
+      .catch(err => console.error("Error deleting from Cloudinary:", err));
     }
 
     function filterEntries(type) {
@@ -189,33 +203,20 @@
       const desc = document.createElement("p");
       desc.innerText = entry.description;
 
-      // Modify delete button to be in the same line as title and date
       const delBtn = document.createElement("button");
       delBtn.className = "delete-button";
       delBtn.innerText = "DELETE";
-      delBtn.style.textDecoration = "underline";  // Underlined "DELETE"
-      delBtn.style.textTransform = "uppercase";  // All caps
-      delBtn.style.marginLeft = "auto";  // Align to the right
       delBtn.onclick = () => {
-  if (!confirm("Are you sure you want to delete this entry?")) return;
+        if (!confirm("Are you sure you want to delete this entry?")) return;
 
-  entries = entries.filter(e => e.id !== entry.id);
-  saveEntries();
-  filterEntries(currentFilter);
+        entries = entries.filter(e => e.id !== entry.id);
+        saveEntries();
+        filterEntries(currentFilter);
 
-  if (entry.public_id) {
-    fetch("/.netlify/functions/deleteFile", {  // Point to your Netlify function
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ public_id: entry.public_id })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (!data.success) console.error("Delete failed:", data.error);
-      })
-      .catch(err => console.error("Delete error:", err));
-  }
-};
+        if (entry.public_id) {
+          deleteFileFromCloudinary(entry.public_id);
+        }
+      };
 
       container.appendChild(title);
       container.appendChild(media);
