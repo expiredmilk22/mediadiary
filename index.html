@@ -197,33 +197,25 @@
       delBtn.style.textTransform = "uppercase";  // All caps
       delBtn.style.marginLeft = "auto";  // Align to the right
       delBtn.onclick = () => {
-        if (!confirm("Are you sure you want to delete this entry?")) return;
+  if (!confirm("Are you sure you want to delete this entry?")) return;
 
-        // Remove entry from local storage
-        entries = entries.filter(e => e.id !== entry.id);
-        saveEntries();
-        filterEntries(currentFilter);
+  entries = entries.filter(e => e.id !== entry.id);
+  saveEntries();
+  filterEntries(currentFilter);
 
-        // Delete the file from Cloudinary
-        fetch(`https://api.cloudinary.com/v1_1/${cloudName}/destroy`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            public_id: entry.public_id  // The public_id of the file you want to delete
-          })
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.result === "ok") {
-              console.log("File deleted from Cloudinary");
-            } else {
-              console.error("Cloudinary delete failed:", data.error);
-            }
-          })
-          .catch(err => console.error("Error deleting from Cloudinary:", err));
-      };
+  if (entry.public_id) {
+    fetch("/.netlify/functions/deleteFile", {  // Point to your Netlify function
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ public_id: entry.public_id })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) console.error("Delete failed:", data.error);
+      })
+      .catch(err => console.error("Delete error:", err));
+  }
+};
 
       container.appendChild(title);
       container.appendChild(media);
