@@ -1,40 +1,45 @@
-// functions/deleteFile.js
+const fetch = require("node-fetch");
 
-const fetch = require('node-fetch');
-
-exports.handler = async function(event, context) {
+exports.handler = async function (event, context) {
   const { public_id } = JSON.parse(event.body);
-  const cloudinaryApiUrl = `https://api.cloudinary.com/v1_1/dnqzqicca/destroy`;
-  const cloudinaryApiKey = 'your_api_key'; // Replace with your actual Cloudinary API key
-  const cloudinaryApiSecret = 'your_api_secret'; // Replace with your actual Cloudinary API secret
+
+  const CLOUD_NAME = "dnqzqicca";
+  const API_KEY = "YOUR_API_KEY";
+  const API_SECRET = "YOUR_API_SECRET";
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signatureString = `public_id=${public_id}&timestamp=${timestamp}${API_SECRET}`;
+
+  const crypto = require("crypto");
+  const signature = crypto
+    .createHash("sha1")
+    .update(signatureString)
+    .digest("hex");
 
   const formData = new URLSearchParams();
-  formData.append('public_id', public_id);
-  formData.append('api_key', cloudinaryApiKey);
-  formData.append('api_secret', cloudinaryApiSecret);
+  formData.append("public_id", public_id);
+  formData.append("api_key", API_KEY);
+  formData.append("timestamp", timestamp);
+  formData.append("signature", signature);
 
   try {
-    const response = await fetch(cloudinaryApiUrl, {
-      method: 'POST',
-      body: formData,
-    });
-
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/destroy`,
+      {
+        method: "POST",
+        body: formData
+      }
+    );
     const result = await response.json();
-    if (result.result === 'ok') {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ success: true }),
-      };
-    } else {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ success: false, error: result }),
-      };
-    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify(result)
+    };
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ success: false, error: error.message }),
+      body: JSON.stringify({ error: "Failed to delete file", details: error })
     };
   }
 };
