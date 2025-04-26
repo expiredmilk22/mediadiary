@@ -9,9 +9,9 @@ cloudinary.config({
 
 exports.handler = async (event) => {
   try {
-    const { publicId } = JSON.parse(event.body);
+    const { public_id } = JSON.parse(event.body);
 
-    const result = await cloudinary.uploader.destroy(publicId);
+    const result = await cloudinary.uploader.destroy(public_id);
 
     if (result.result !== 'ok') {
       return {
