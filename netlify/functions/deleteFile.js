@@ -4,8 +4,8 @@ exports.handler = async function (event, context) {
   const { public_id } = JSON.parse(event.body);
 
   const CLOUD_NAME = "dnqzqicca";
-  const API_KEY = "YOUR_API_KEY";
-  const API_SECRET = "YOUR_API_SECRET";
+  const API_KEY = "713675787775187";
+  const API_SECRET = "H_o14NtBW6SIVaC67Yvf8PRb0Co";
 
   const timestamp = Math.floor(Date.now() / 1000);
   const signatureString = `public_id=${public_id}&timestamp=${timestamp}${API_SECRET}`;
