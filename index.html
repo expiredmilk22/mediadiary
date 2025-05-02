@@ -138,13 +138,24 @@
     }
 
     function deleteFileFromCloudinary(public_id) {
-      fetch("/.netlify/functions/deleteFile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ public_id })
-      })
+  fetch("/.netlify/functions/deleteFile", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ publicId: public_id }) // <-- FIXED property name
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert("File deleted from Cloudinary.");
+    } else {
+      alert("Error deleting from Cloudinary.");
+      console.error("Cloudinary deletion error:", data);
+    }
+  })
+  .catch(err => console.error("Error deleting from Cloudinary:", err));
+}
       .then(res => res.json())
       .then(data => {
         if (data.success) {
