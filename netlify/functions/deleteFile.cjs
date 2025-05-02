@@ -43,7 +43,7 @@ exports.handler = async (event) => {
       statusCode: 500,
       body: JSON.stringify({ message: 'Server error', error: error.message })
 
-exports.handler = async (event) => {
+exports.handler = async (event) => {...}
   try {
     console.log("DELETE FUNCTION TRIGGERED");
     console.log("ENV:", process.env.CLOUDINARY_CLOUD_NAME);
