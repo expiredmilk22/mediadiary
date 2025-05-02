@@ -42,6 +42,26 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       body: JSON.stringify({ message: 'Server error', error: error.message })
+
+exports.handler = async (event) => {
+  try {
+    console.log("DELETE FUNCTION TRIGGERED");
+    console.log("ENV:", process.env.CLOUDINARY_CLOUD_NAME);
+    const { public_id } = JSON.parse(event.body);
+    console.log("public_id received:", public_id);
+    
+    const result = await cloudinary.uploader.destroy(public_id, { invalidate: true });
+    console.log("Cloudinary result:", result);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'File deleted successfully', result })
+    };
+  } catch (error) {
+    console.error("Error in deleteFile function:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: 'Server error', error: error.message })
     };
   }
 };
